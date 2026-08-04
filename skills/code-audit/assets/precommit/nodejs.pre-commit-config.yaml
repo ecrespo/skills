@@ -1,0 +1,70 @@
+# .pre-commit-config.yaml — Node.js backend (Express/Fastify, TS recommended)
+# FastAPI gate equivalences: Ruff→ESLint+Prettier · ty→tsc · Bandit→eslint-plugin-security
+# C901/CCR001→complexity+sonarjs/cognitive-complexity · pip-audit→npm audit
+# Required devDependencies: eslint, typescript-eslint, prettier,
+#   eslint-plugin-security, eslint-plugin-sonarjs, jscpd
+# CI: jest/vitest --coverage, semgrep p/javascript p/typescript p/expressjs, osv-scanner, trivy.
+exclude: |
+  (?x)^(
+    node_modules/.*|
+    dist/.*|
+    coverage/.*|
+    \.git/.*
+  )$
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--unsafe]
+      - id: check-json
+        exclude: tsconfig.*\.json   # JSONC
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: detect-private-key
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.13.1-beta
+    hooks:
+      - id: hadolint-docker
+        args: [--failure-threshold=warning]
+  - repo: local
+    hooks:
+      - id: prettier
+        name: "fmt: Prettier"
+        language: system
+        entry: npx prettier --check
+        types_or: [javascript, jsx, ts, tsx, json, yaml, markdown]
+      - id: eslint
+        name: "lint+sast+complexity: ESLint (security + sonarjs)"
+        # eslint.config.js must include:
+        #   complexity: ["error", 10]
+        #   "sonarjs/cognitive-complexity": ["error", 12]
+        #   plugin:security/recommended
+        language: system
+        entry: npx eslint --max-warnings=0
+        types_or: [javascript, jsx, ts, tsx]
+      - id: tsc
+        name: "types: tsc --noEmit"
+        language: system
+        entry: npx tsc --noEmit
+        pass_filenames: false
+        types_or: [ts, tsx]
+      - id: jscpd
+        name: "dry: jscpd (blocks at >3% duplication)"
+        language: system
+        entry: npx jscpd src/ --min-tokens 70 --threshold 3
+        pass_filenames: false
+        files: ^src/
+      - id: npm-audit
+        name: "sca: npm audit high+ (only if lockfile changes)"
+        language: system
+        entry: npm audit --omit=dev --audit-level=high
+        pass_filenames: false
+        files: ^(package\.json|package-lock\.json)$

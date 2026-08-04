@@ -1,0 +1,75 @@
+# .pre-commit-config.yaml — Golang
+# golangci-lint concentrates lint+SAST+complexity+DRY: gosec (Bandit), gocyclo (C901),
+# gocognit (CCR001), dupl (duplicate-code), errcheck, staticcheck, revive.
+# Requires .golangci.yml (see references/stacks-golang.md in the code-audit skill).
+# CI: go test -race -cover (threshold), govulncheck, trivy fs+image, full golangci.
+exclude: |
+  (?x)^(
+    vendor/.*|
+    \.git/.*|
+    .*\.pb\.go$
+  )$
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--unsafe]
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: detect-private-key
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.13.1-beta
+    hooks:
+      - id: hadolint-docker
+        args: [--failure-threshold=warning]
+  - repo: local
+    hooks:
+      - id: gofumpt
+        name: "fmt: gofumpt"
+        language: system
+        entry: gofumpt -l -w
+        types: [go]
+      - id: goimports
+        name: "fmt: goimports"
+        language: system
+        entry: goimports -l -w
+        types: [go]
+      - id: go-vet
+        name: "lint: go vet"
+        language: system
+        entry: bash -c 'go vet ./...'
+        pass_filenames: false
+        types: [go]
+      - id: golangci-lint
+        name: "lint+sast+complexity+dry: golangci-lint"
+        language: system
+        entry: bash -c 'golangci-lint run --new-from-rev=HEAD~1 ./...'
+        pass_filenames: false
+        types: [go]
+      - id: go-build
+        name: "build: go build"
+        language: system
+        entry: bash -c 'go build ./...'
+        pass_filenames: false
+        types: [go]
+      - id: go-mod-tidy
+        name: "deps: go mod tidy without drift"
+        language: system
+        entry: bash -c 'go mod tidy -diff'
+        pass_filenames: false
+        files: ^(go\.mod|go\.sum)$
+      - id: govulncheck
+        name: "sca: govulncheck (only if deps change)"
+        language: system
+        entry: bash -c 'govulncheck ./...'
+        pass_filenames: false
+        files: ^(go\.mod|go\.sum)$
