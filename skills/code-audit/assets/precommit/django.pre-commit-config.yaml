@@ -1,0 +1,104 @@
+# .pre-commit-config.yaml — Django + uv
+# Same philosophy as the FastAPI gate + Django-specific hooks (djLint, django-upgrade).
+# CI: pytest-django --cov, manage.py check --deploy, semgrep p/django, trivy.
+default_language_version:
+  python: python3.13
+exclude: |
+  (?x)^(
+    \.venv/.*|
+    .*/migrations/.*|
+    static/.*|
+    \.git/.*
+  )$
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--unsafe]
+      - id: check-toml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: detect-private-key
+      - id: debug-statements
+      - id: check-ast
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.13.1-beta
+    hooks:
+      - id: hadolint-docker
+        args: [--failure-threshold=warning, --ignore=DL3008]
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.5
+    hooks:
+      - id: ruff
+        # enable DJ rules (flake8-django) in pyproject: select = ["DJ", ...]
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+  - repo: https://github.com/adamchainz/django-upgrade
+    rev: 1.22.2
+    hooks:
+      - id: django-upgrade
+        args: [--target-version, "5.1"]   # adjust to the project's version
+  - repo: https://github.com/djlint/djLint
+    rev: v1.36.4
+    hooks:
+      - id: djlint-django
+        name: "templates: djLint"
+  - repo: local
+    hooks:
+      - id: mypy
+        name: "types: mypy (django-stubs)"
+        language: system
+        entry: uv run mypy .
+        pass_filenames: false
+        types: [python]
+      - id: django-check
+        name: "django: system check"
+        language: system
+        entry: uv run python manage.py check
+        pass_filenames: false
+        types: [python]
+      - id: migrations-check
+        name: "django: migrations without drift"
+        language: system
+        entry: uv run python manage.py makemigrations --check --dry-run
+        pass_filenames: false
+        types: [python]
+      - id: lizard
+        name: "complexity: Lizard CCN 10 / cognitive via flake8 below"
+        language: system
+        entry: uv run lizard . --CCN 10 --arguments 5 --length 200 -w -x "*/migrations/*" -x "*/tests/*"
+        pass_filenames: false
+        types: [python]
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.2.0
+    hooks:
+      - id: flake8
+        name: "complexity: cognitive CCR001 (max=12)"
+        additional_dependencies: [flake8-cognitive-complexity==0.1.0]
+        args: [--select=CCR001, --max-cognitive-complexity=12]
+        exclude: ^(tests/|.*/migrations/)
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.8.3
+    hooks:
+      - id: bandit
+        additional_dependencies: ["bandit[toml]"]
+        args: [-r, ., -c, pyproject.toml, --severity-level=medium, -q]
+        pass_filenames: false
+        exclude: ^(tests/|.*/migrations/)
+  - repo: local
+    hooks:
+      - id: pip-audit
+        name: "sca: pip-audit (only if lockfile changes)"
+        language: system
+        entry: uv run pip-audit
+        pass_filenames: false
+        files: ^(pyproject\.toml|uv\.lock|requirements.*\.txt)$

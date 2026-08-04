@@ -1,0 +1,21 @@
+{
+  "name": "ecrespo-skills",
+  "version": "1.0.0",
+  "description": "Software-engineering Agent Skills: evidence-based architecture evaluation (arch-evaluator), 8-dimension quality/security audits (code-audit), token-efficient codebase context (graph-first-context), reverse-engineering docs and specs from existing repos (reverse-sdd), and Spec-Driven Design methodology and templates (spec-driven-design).",
+  "author": {
+    "name": "Ernesto Crespo",
+    "email": "ecrespo@gmail.com",
+    "url": "https://github.com/ecrespo"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/ecrespo/skills",
+  "homepage": "https://github.com/ecrespo/skills#readme",
+  "keywords": [
+    "skills",
+    "architecture",
+    "code-audit",
+    "spec-driven-design",
+    "reverse-engineering",
+    "codebase-context"
+  ]
+}

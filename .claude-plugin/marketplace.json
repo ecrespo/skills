@@ -1,0 +1,15 @@
+{
+  "name": "ecrespo-skills",
+  "owner": {
+    "name": "Ernesto Crespo",
+    "email": "ecrespo@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "ecrespo-skills",
+      "source": "./",
+      "description": "Five software-engineering skills: arch-evaluator, code-audit, graph-first-context, reverse-sdd, spec-driven-design.",
+      "category": "engineering"
+    }
+  ]
+}

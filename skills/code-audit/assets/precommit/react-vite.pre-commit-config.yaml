@@ -1,0 +1,72 @@
+# .pre-commit-config.yaml — React + Vite (SPA)
+# devDependencies: eslint, typescript-eslint, eslint-plugin-react-hooks,
+#   eslint-plugin-jsx-a11y, eslint-plugin-security, eslint-plugin-sonarjs, prettier, jscpd
+# CI: vitest run --coverage, Playwright/Cypress, semgrep p/react, osv-scanner, trivy.
+# Vite security caveat: everything VITE_* ends up in the bundle — never put secrets there.
+exclude: |
+  (?x)^(
+    node_modules/.*|
+    dist/.*|
+    coverage/.*|
+    \.git/.*
+  )$
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--unsafe]
+      - id: check-json
+        exclude: tsconfig.*\.json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: detect-private-key
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.13.1-beta
+    hooks:
+      - id: hadolint-docker
+        args: [--failure-threshold=warning]
+  - repo: local
+    hooks:
+      - id: prettier
+        name: "fmt: Prettier"
+        language: system
+        entry: npx prettier --check
+        types_or: [javascript, jsx, ts, tsx, json, css, markdown]
+      - id: eslint
+        name: "lint+sast+complexity: ESLint (hooks + a11y + security + sonarjs)"
+        # eslint.config.js: react-hooks/recommended (error), jsx-a11y,
+        # complexity [error,10], sonarjs/cognitive-complexity [error,12], security
+        language: system
+        entry: npx eslint --max-warnings=0
+        types_or: [javascript, jsx, ts, tsx]
+      - id: tsc
+        name: "types: tsc --noEmit"
+        language: system
+        entry: npx tsc --noEmit
+        pass_filenames: false
+        types_or: [ts, tsx]
+      - id: no-vite-secrets
+        name: "secrets: no sensitive material in VITE_"
+        language: system
+        entry: bash -c '! grep -rInE "VITE_[A-Z_]*(KEY|SECRET|TOKEN|PASSWORD)" --include="*.ts*" --include="*.js*" --include=".env*" . --exclude-dir=node_modules --exclude-dir=dist'
+        pass_filenames: false
+      - id: jscpd
+        name: "dry: jscpd src/ (blocks at >3%)"
+        language: system
+        entry: npx jscpd src/ --min-tokens 70 --threshold 3
+        pass_filenames: false
+        files: ^src/
+      - id: npm-audit
+        name: "sca: npm audit high+ (lockfile only)"
+        language: system
+        entry: npm audit --omit=dev --audit-level=high
+        pass_filenames: false
+        files: ^(package\.json|package-lock\.json)$

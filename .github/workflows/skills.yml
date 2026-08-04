@@ -1,0 +1,100 @@
+name: Validate & Package Skills
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write # needed to attach release assets on tags
+
+jobs:
+  validate:
+    name: Validate skills
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate Agent Skills rules
+        run: python3 scripts/validate_and_package.py --no-package
+
+      - name: Smoke-test bundled scripts (--help)
+        run: |
+          set -e
+          for s in skills/*/scripts/*.py; do
+            python3 "$s" --help > /dev/null
+            echo "OK $s"
+          done
+
+      - name: Lint installer script
+        run: bash -n scripts/install.sh
+
+      - name: Check plugin manifests are valid JSON
+        run: |
+          python3 - <<'EOF'
+          import json
+          for f in (".claude-plugin/plugin.json", ".claude-plugin/marketplace.json"):
+              data = json.load(open(f))
+              assert data.get("name"), f"{f}: missing name"
+              print(f"OK {f}")
+          EOF
+
+  package:
+    name: Package .skill bundles
+    needs: validate
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build dist/*.skill
+        run: python3 scripts/validate_and_package.py
+
+      - name: Upload bundles as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: skill-bundles
+          path: dist/*.skill
+          if-no-files-found: error
+          retention-days: 30
+
+  release:
+    name: Publish release with .skill assets
+    needs: package
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: skill-bundles
+          path: dist
+
+      - name: Create GitHub Release with skill bundles
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.skill
+          generate_release_notes: true
+          body: |
+            Packaged Agent Skills bundles.
+
+            **Claude Desktop / claude.ai**: download a `.skill` file below and add it
+            in Settings > Capabilities > Skills.
+
+            **Claude Code**: `/plugin marketplace add ecrespo/skills` then
+            `/plugin install ecrespo-skills@ecrespo-skills` — or copy a skill folder
+            into `~/.claude/skills/`.
+
+            **Other agents**: `npx skills@latest add ecrespo/skills` or
+            `curl -fsSL https://raw.githubusercontent.com/ecrespo/skills/main/scripts/install.sh | bash -s -- --dest <skills-dir>`
