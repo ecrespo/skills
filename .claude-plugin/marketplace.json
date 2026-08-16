@@ -8,7 +8,7 @@
     {
       "name": "ecrespo-skills",
       "source": "./",
-      "description": "Five software-engineering skills: arch-evaluator, code-audit, graph-first-context, reverse-sdd, spec-driven-design.",
+      "description": "Six software-engineering skills: arch-evaluator, arch-patterns, code-audit, graph-first-context, reverse-sdd, spec-driven-design.",
       "category": "engineering"
     }
   ]

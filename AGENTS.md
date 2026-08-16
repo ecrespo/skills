@@ -7,6 +7,7 @@ This repository is a collection of Agent Skills. Each skill is a self-contained 
 When a task matches one of the descriptions below, read the corresponding `skills/<name>/SKILL.md` and follow it. Load files from `references/` only when the skill directs you to; run `scripts/` with Python 3 (stdlib only, no installs needed).
 
 - `skills/arch-evaluator` — evaluate a repository's architecture with deterministic evidence (dependency graph, git-history mining), rank weaknesses, propose ADRs and a migration plan.
+- `skills/arch-patterns` — choose, explain, compare, diagram and scaffold software architectures: catalog of 19 styles, decision tree over six inputs, quality-attribute matrix, Mermaid diagrams, ADR template, Python/FastAPI/Reflex scaffolds and an AST boundary checker.
 - `skills/code-audit` — 8-dimension quality + security audit (DRY, SOLID, unit/integration tests, SAST, SCA, secrets, containers) with per-stack tool matrices and pre-commit templates.
 - `skills/graph-first-context` — token-efficient codebase understanding via CodeGraph, Graphify, and lat.md; query graphs before grep/glob/file reads.
 - `skills/reverse-sdd` — reverse-engineer docs, user stories, acceptance criteria, and a rebuild plan from an existing repo's code and git history.
@@ -14,7 +15,7 @@ When a task matches one of the descriptions below, read the corresponding `skill
 
 ## Execution order
 
-When chaining multiple skills over the same repository, follow this order — each stage feeds the next: `graph-first-context` (index the codebase) → `reverse-sdd` (documentation baseline) → `code-audit` (quality/security findings) → `arch-evaluator` (architecture verdict, ADRs, migration plan) → `spec-driven-design` (specs and tasks for the accepted changes). Each skill also works standalone.
+When chaining multiple skills over the same repository, follow this order — each stage feeds the next: `graph-first-context` (index the codebase) → `reverse-sdd` (documentation baseline) → `code-audit` (quality/security findings) → `arch-evaluator` (architecture verdict, ADRs, migration plan) → `arch-patterns` (target style, interior pattern, diagram, ADR, scaffold) → `spec-driven-design` (specs and tasks for the accepted changes). Each skill also works standalone.
 
 ## Working on this repository
 
