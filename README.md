@@ -1,6 +1,6 @@
 # Agent Skills Collection
 
-Five production-ready [Agent Skills](https://docs.claude.com/en/docs/agents-and-tools/agent-skills) for software-engineering workflows: architecture evaluation, code auditing, spec-driven design, reverse-engineering documentation, and token-efficient codebase context. They work with any agent that implements the Agent Skills format (`SKILL.md`), including Claude Desktop / Cowork, Claude Code, the Claude API, Codex, and OpenCode.
+Six production-ready [Agent Skills](https://docs.claude.com/en/docs/agents-and-tools/agent-skills) for software-engineering workflows: architecture evaluation, architecture selection and scaffolding, code auditing, spec-driven design, reverse-engineering documentation, and token-efficient codebase context. They work with any agent that implements the Agent Skills format (`SKILL.md`), including Claude Desktop / Cowork, Claude Code, the Claude API, Codex, and OpenCode.
 
 ## What is a skill?
 
@@ -9,6 +9,7 @@ A skill is a self-contained folder with a `SKILL.md` file. The YAML frontmatter 
 ```
 skills/
 ├── arch-evaluator/        # Evidence-based architecture audit
+├── arch-patterns/         # Choose, explain, diagram & scaffold architectures
 ├── code-audit/            # 8-dimension quality + security audit
 ├── graph-first-context/   # Token-efficient codebase understanding
 ├── reverse-sdd/           # Reverse-engineer docs & specs from a repo
@@ -29,7 +30,8 @@ When applying the full collection to a repository, run the skills in this order 
 2. **reverse-sdd** — with context in place, reverse-engineer the documentation baseline: inventory, architecture docs, evolution timeline, user stories, and test matrix.
 3. **code-audit** — audit quality and security over the documented baseline (DRY, SOLID, tests, SAST, SCA, secrets, containers) and produce the remediation plan.
 4. **arch-evaluator** — evaluate the architecture using the dependency graph, git-history signals, and the audit findings; produce ADRs and a phased migration plan.
-5. **spec-driven-design** — turn the accepted proposals into specs: Constitution, PRD with EARS criteria, technical design, data model, implementation plan, and tasks.
+5. **arch-patterns** — decide the target architecture for the weaknesses arch-evaluator ranked: base style + interior pattern + complements, with the comparison table, the Mermaid diagram, the ADR, and a scaffolded skeleton to migrate towards.
+6. **spec-driven-design** — turn the accepted proposals into specs: Constitution, PRD with EARS criteria, technical design, data model, implementation plan, and tasks.
 
 Each skill still works standalone; the order matters only when chaining them over the same repo.
 
@@ -40,6 +42,12 @@ Each skill still works standalone; the order matters only when chaining them ove
 Audits a repository's architecture with deterministic evidence and produces a scorecard, ranked weaknesses, ADRs for proposed changes, and a phased migration plan. Two pure-stdlib scripts do the heavy lifting before any judgment is made: `scripts/dep_graph.py` builds a module-level dependency graph (Python + TS/JS) to find cycles, god modules, and unstable coupling; `scripts/arch_signals.py` mines git history for hotspots, fix-prone files, and temporal (co-change) coupling. Every finding must carry a `[METRIC]`, `[VERIFY]`, or `[COMMITS]` evidence tag.
 
 Triggers: "evaluate the architecture", "architecture audit", "what's wrong with this repo", "propose architecture improvements".
+
+### arch-patterns
+
+Catalog, decision guide and implementation kit for 19 architectures (Layered, Modular Monolith, Client-Server, Microservices, DOMA, SOA, Event-Driven, Serverless, Hexagonal, Clean, CQRS+Event Sourcing, Microkernel, Pipes & Filters, Space-Based, Service-Based, Micro-frontends, P2P, Cell-Based, Agentic). Five modes — Explain, Compare, Recommend, Scaffold, Check — driven by `references/decision-guide.md` (six decision inputs, quality-attribute matrix, decision tree, how styles combine) and `references/catalog.md` (pros, contras, anti-patterns and mitigations per entry). Recommendations name the inputs that drove them and default to the cheapest option that meets today's attributes: Modular Monolith + Hexagonal unless an input demands more. `scripts/scaffold.py` writes runnable Python/FastAPI/Reflex skeletons (`layered | modular-monolith | hexagonal | clean | cqrs-es | microkernel | pipes-filters | doma-gateway`) with tests and import rules; `scripts/check_boundaries.py` is an AST import checker that proves a repo respects its layers or modules. Ships `assets/adr-template.md`, an architecture-proposal template, and Mermaid diagram templates per style.
+
+Triggers: "which architecture should I use", "monolith or microservices", "design the architecture of X", "hexagonal vs clean", "explain CQRS/DOMA/EDA", "lay out a FastAPI project as hexagonal", "does this repo respect its layers".
 
 ### code-audit
 
@@ -76,7 +84,7 @@ The repo ships a plugin marketplace (`.claude-plugin/`). Inside a Claude Code se
 /plugin install ecrespo-skills@ecrespo-skills
 ```
 
-All five skills install as a managed bundle and update when you refresh the marketplace. Prefer editable copies instead? Use the installer below.
+All six skills install as a managed bundle and update when you refresh the marketplace. Prefer editable copies instead? Use the installer below.
 
 ### Claude Code, Codex, Cursor, OpenCode & other agents — skills.sh
 
@@ -116,7 +124,7 @@ Upload the skill zip via the Skills endpoint and reference it in a container-ena
 
 1. **validate** — enforces the Agent Skills rules (frontmatter, naming, English-only, referenced paths), smoke-tests every bundled script, lints the installer, and checks the plugin manifests.
 2. **package** — builds `dist/*.skill` and uploads them as a workflow artifact (pushes only).
-3. **release** — on `v*` tags, publishes a GitHub Release with the five `.skill` bundles attached and install instructions in the notes.
+3. **release** — on `v*` tags, publishes a GitHub Release with the six `.skill` bundles attached and install instructions in the notes.
 
 Cutting a release:
 
@@ -126,12 +134,14 @@ git tag v1.0.0 && git push origin v1.0.0
 
 ## Bundled scripts
 
-All scripts are pure Python 3 stdlib — no dependencies to install — and read-only over the analyzed repo (they only write their own reports). Each supports `--help`.
+All scripts are pure Python 3 stdlib — no dependencies to install — and read-only over the analyzed repo (they only write their own reports; `scaffold.py` writes a new project folder). Each supports `--help`.
 
 | Script | Skill | Output |
 |---|---|---|
 | `dep_graph.py` | arch-evaluator | `dep_graph.json` / `.md` — cycles, instability, god modules |
 | `arch_signals.py` | arch-evaluator | `arch_signals.json` / `.md` — hotspots, temporal coupling |
+| `scaffold.py` | arch-patterns | runnable skeleton per pattern (layered … doma-gateway) + tests, import rules, README |
+| `check_boundaries.py` | arch-patterns | layer/module import-violation report (`file:line`) from AST |
 | `detect_stack.py` | code-audit | stack detection + `gaps.md` tooling-gap report |
 | `repo_inventory.py` | reverse-sdd | `00-INVENTORY.md` — modules, entry points, dependencies |
 | `git_history.py` | reverse-sdd | evolution timeline + commit clusters for user stories |
