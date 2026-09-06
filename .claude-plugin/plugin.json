@@ -1,7 +1,7 @@
 {
   "name": "ecrespo-skills",
-  "version": "1.1.0",
-  "description": "Software-engineering Agent Skills: evidence-based architecture evaluation (arch-evaluator), architecture selection, diagrams and scaffolding for 19 styles (arch-patterns), 8-dimension quality/security audits (code-audit), token-efficient codebase context (graph-first-context), reverse-engineering docs and specs from existing repos (reverse-sdd), and Spec-Driven Design methodology and templates (spec-driven-design).",
+  "version": "1.2.0",
+  "description": "Software-engineering and content Agent Skills: evidence-based architecture evaluation (arch-evaluator), architecture selection, diagrams and scaffolding for 19 styles (arch-patterns), 8-dimension quality/security audits (code-audit), token-efficient codebase context (graph-first-context), animated video infographics with Remotion (infografia-animada), reverse-engineering docs and specs from existing repos (reverse-sdd), and Spec-Driven Design methodology and templates (spec-driven-design).",
   "author": {
     "name": "Ernesto Crespo",
     "email": "ecrespo@gmail.com",
@@ -17,6 +17,9 @@
     "code-audit",
     "spec-driven-design",
     "reverse-engineering",
-    "codebase-context"
+    "codebase-context",
+    "remotion",
+    "infographics",
+    "motion-graphics"
   ]
 }

@@ -1,6 +1,6 @@
 # Agent Skills Collection
 
-Six production-ready [Agent Skills](https://docs.claude.com/en/docs/agents-and-tools/agent-skills) for software-engineering workflows: architecture evaluation, architecture selection and scaffolding, code auditing, spec-driven design, reverse-engineering documentation, and token-efficient codebase context. They work with any agent that implements the Agent Skills format (`SKILL.md`), including Claude Desktop / Cowork, Claude Code, the Claude API, Codex, and OpenCode.
+Seven production-ready [Agent Skills](https://docs.claude.com/en/docs/agents-and-tools/agent-skills) for software-engineering workflows: architecture evaluation, architecture selection and scaffolding, code auditing, spec-driven design, reverse-engineering documentation, token-efficient codebase context, and animated video infographics. They work with any agent that implements the Agent Skills format (`SKILL.md`), including Claude Desktop / Cowork, Claude Code, the Claude API, Codex, and OpenCode.
 
 ## What is a skill?
 
@@ -12,6 +12,7 @@ skills/
 ├── arch-patterns/         # Choose, explain, diagram & scaffold architectures
 ├── code-audit/            # 8-dimension quality + security audit
 ├── graph-first-context/   # Token-efficient codebase understanding
+├── infografia-animada/    # Animated video infographics with Remotion
 ├── reverse-sdd/           # Reverse-engineer docs & specs from a repo
 └── spec-driven-design/    # SDD v2 methodology and templates
 scripts/
@@ -19,6 +20,7 @@ scripts/
 └── install.sh               # Copy skills into any agent's skills directory
 .claude-plugin/              # Claude Code plugin + marketplace manifests
 .github/workflows/           # CI: validate, package, release
+docs/install-claude-code.md  # Step-by-step Claude Code installation guide
 AGENTS.md                    # Instructions for agents working with/on this repo
 ```
 
@@ -33,7 +35,7 @@ When applying the full collection to a repository, run the skills in this order 
 5. **arch-patterns** — decide the target architecture for the weaknesses arch-evaluator ranked: base style + interior pattern + complements, with the comparison table, the Mermaid diagram, the ADR, and a scaffolded skeleton to migrate towards.
 6. **spec-driven-design** — turn the accepted proposals into specs: Constitution, PRD with EARS criteria, technical design, data model, implementation plan, and tasks.
 
-Each skill still works standalone; the order matters only when chaining them over the same repo.
+Each skill still works standalone; the order matters only when chaining them over the same repo. **infografia-animada** sits outside this chain — it turns finished content (a note, a checklist, the summary of an audit) into an animated visual piece, so it runs on its own whenever a deliverable needs to be seen rather than read.
 
 ## The skills
 
@@ -61,6 +63,14 @@ Orchestrates three knowledge layers for token-efficient codebase understanding: 
 
 Triggers: working in a repo containing `.codegraph/`, `graphify-out/`, or `lat.md/`; "impact analysis", "blast radius", "knowledge graph".
 
+### infografia-animada
+
+Turns a reference image plus the caller's own content into an animated video infographic rendered with [Remotion](https://remotion.dev), delivered as MP4 and GIF. It keeps four inputs strictly separated: **form** comes from the reference image (structure, layout, typographic rhythm — never its texts or colours), **content** from the user, **palette and motion choices** from a short round of questions, and the **motion methodology** from the skill itself. `references/patterns.md` holds layout recipes for six structures (numbered diagonal bands, hub with branches, vertical checklist, decision tree, card grid, serpentine timeline); `references/motion.md` fixes the animation contract — a spring entrance hook (damping 200, mass 0.6), staggered reveals, lines that draw themselves with `evolvePath` and then keep a dotted flow running in an infinite loop; `references/icons.md` covers brand logos through `simple-icons`. `scripts/setup_project.py` scaffolds the Remotion project (and strips the Tailwind wiring the blank template still ships), `scripts/to_gif.py` does the two-pass palette GIF conversion, and `assets/templates/` ships the hook, the flow line, the icon component and the palette file. The workflow stops for approval on a rendered still before spending minutes on the full video.
+
+Triggers: "animated infographic", "make this note into a video infographic", "animate this infographic in that style", "vertical explainer for stories", "animated poster with these steps".
+
+Requires Node.js 18+ and `ffmpeg`; everything else the setup script installs.
+
 ### reverse-sdd
 
 Reverse-engineers a complete documentation and spec kit from an existing repository so a new version can be rebuilt from scratch. `scripts/repo_inventory.py` inventories the codebase and `scripts/git_history.py` clusters commit history into an evolution timeline; from these the skill produces architecture docs, a tech-stack inventory, user stories with Gherkin acceptance criteria, a test matrix, and a rebuild plan mapped to SDD artifacts (`00-INVENTORY.md` … `05-REBUILD-PLAN.md`, `US/US-NNN-*.md`).
@@ -84,7 +94,9 @@ The repo ships a plugin marketplace (`.claude-plugin/`). Inside a Claude Code se
 /plugin install ecrespo-skills@ecrespo-skills
 ```
 
-All six skills install as a managed bundle and update when you refresh the marketplace. Prefer editable copies instead? Use the installer below.
+All seven skills install as a managed bundle and update when you refresh the marketplace. Prefer editable copies instead? Use the installer below.
+
+Full walkthrough, including per-project installs, verification and updates: **[docs/install-claude-code.md](docs/install-claude-code.md)**.
 
 ### Claude Code, Codex, Cursor, OpenCode & other agents — skills.sh
 
@@ -134,7 +146,7 @@ git tag v1.0.0 && git push origin v1.0.0
 
 ## Bundled scripts
 
-All scripts are pure Python 3 stdlib — no dependencies to install — and read-only over the analyzed repo (they only write their own reports; `scaffold.py` writes a new project folder). Each supports `--help`.
+All scripts are pure Python 3 stdlib — no dependencies to install — and read-only over the analyzed repo (they only write their own reports; `scaffold.py` and `setup_project.py` write a new project folder, `to_gif.py` writes the GIF it is asked for). Each supports `--help`. The two infografia-animada scripts shell out to external tools — Node/npx and ffmpeg respectively — and say so when either is missing.
 
 | Script | Skill | Output |
 |---|---|---|
@@ -143,6 +155,8 @@ All scripts are pure Python 3 stdlib — no dependencies to install — and read
 | `scaffold.py` | arch-patterns | runnable skeleton per pattern (layered … doma-gateway) + tests, import rules, README |
 | `check_boundaries.py` | arch-patterns | layer/module import-violation report (`file:line`) from AST |
 | `detect_stack.py` | code-audit | stack detection + `gaps.md` tooling-gap report |
+| `setup_project.py` | infografia-animada | scaffolded Remotion project with templates, Tailwind stripped (needs Node 18+) |
+| `to_gif.py` | infografia-animada | looping GIF from a rendered MP4, two-pass palette (needs ffmpeg) |
 | `repo_inventory.py` | reverse-sdd | `00-INVENTORY.md` — modules, entry points, dependencies |
 | `git_history.py` | reverse-sdd | evolution timeline + commit clusters for user stories |
 
