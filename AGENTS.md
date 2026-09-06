@@ -10,16 +10,17 @@ When a task matches one of the descriptions below, read the corresponding `skill
 - `skills/arch-patterns` — choose, explain, compare, diagram and scaffold software architectures: catalog of 19 styles, decision tree over six inputs, quality-attribute matrix, Mermaid diagrams, ADR template, Python/FastAPI/Reflex scaffolds and an AST boundary checker.
 - `skills/code-audit` — 8-dimension quality + security audit (DRY, SOLID, unit/integration tests, SAST, SCA, secrets, containers) with per-stack tool matrices and pre-commit templates.
 - `skills/graph-first-context` — token-efficient codebase understanding via CodeGraph, Graphify, and lat.md; query graphs before grep/glob/file reads.
+- `skills/infografia-animada` — animated video infographics (MP4 + GIF) with Remotion: read a reference image for form only, take the content from the user, ask for palette and motion, then scaffold, render a still for approval, and export.
 - `skills/reverse-sdd` — reverse-engineer docs, user stories, acceptance criteria, and a rebuild plan from an existing repo's code and git history.
 - `skills/spec-driven-design` — Spec-Driven Design v2: Constitution, PRD with EARS criteria, API spec, technical design, data model, plan, tasks, delta specs, analyze gate.
 
 ## Execution order
 
-When chaining multiple skills over the same repository, follow this order — each stage feeds the next: `graph-first-context` (index the codebase) → `reverse-sdd` (documentation baseline) → `code-audit` (quality/security findings) → `arch-evaluator` (architecture verdict, ADRs, migration plan) → `arch-patterns` (target style, interior pattern, diagram, ADR, scaffold) → `spec-driven-design` (specs and tasks for the accepted changes). Each skill also works standalone.
+When chaining multiple skills over the same repository, follow this order — each stage feeds the next: `graph-first-context` (index the codebase) → `reverse-sdd` (documentation baseline) → `code-audit` (quality/security findings) → `arch-evaluator` (architecture verdict, ADRs, migration plan) → `arch-patterns` (target style, interior pattern, diagram, ADR, scaffold) → `spec-driven-design` (specs and tasks for the accepted changes). Each skill also works standalone. `infografia-animada` is not part of that chain: it turns finished content into an animated visual deliverable and runs on its own.
 
 ## Working on this repository
 
 - Skills must comply with the Agent Skills format: frontmatter limited to `name` and `description`, lowercase-hyphen names matching the folder, description ≤ 1024 chars in third person, English-only content.
 - After any change, run `python3 scripts/validate_and_package.py --no-package` and make sure all skills pass.
-- Bundled scripts must stay pure-stdlib Python 3 and read-only over analyzed repos.
+- Bundled scripts must stay pure-stdlib Python 3 and read-only over analyzed repos. Scripts that scaffold or export (`scaffold.py`, `setup_project.py`, `to_gif.py`) write only inside the folder they are told to create, and fail with a clear message when an external tool they drive (Node/npx, ffmpeg) is missing.
 - Long-form content belongs in `references/`, not in `SKILL.md` bodies.
